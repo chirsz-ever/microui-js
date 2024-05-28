@@ -3,7 +3,7 @@ interface WasmModule {
 }
 
 export interface Context {
-  commands(): CommandList;
+  commands(): Command[];
   begin(): void;
   end(): void;
   pop_id(): void;
@@ -40,12 +40,6 @@ export interface Context {
   button(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
   text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   begin_window(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect): number;
-  delete(): void;
-}
-
-export interface CommandList {
-  size(): number;
-  at(_0: number): Command;
   delete(): void;
 }
 
@@ -104,7 +98,6 @@ export type Rect = {
 
 interface EmbindModule {
   Context: {new(): Context};
-  CommandList: {};
   Command: {};
   TextCommand: {};
   ClipCommand: {};

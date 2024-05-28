@@ -73,9 +73,7 @@ function process_commands(mctx, ctx2d) {
     ctx2d.save();
 
     const commands = mctx.commands();
-    const size = commands.size();
-    for (let i = 0; i < size; ++i) {
-        const cmd = commands.at(i);
+    for (const cmd of commands) {
         switch (cmd.type) {
             case microui.COMMAND_TEXT: draw_text(ctx2d, cmd.text_str(), cmd.text.pos, cmd.text.color); break;
             case microui.COMMAND_RECT: draw_rect(ctx2d, cmd.rect.rect, cmd.rect.color); break;

@@ -5,6 +5,7 @@ extern "C" {
 #include <cstdint>
 #include <cstdlib>
 #include <emscripten/bind.h>
+#include <emscripten/val.h>
 #include <string>
 #include <vector>
 
@@ -14,19 +15,11 @@ static mu_Context *my_new_mu_Context() {
     return ctx;
 }
 
-static std::vector<mu_Command *> my_mu_commands(mu_Context *ctx) {
-    mu_Command *cmd = NULL;
-    std::vector<mu_Command *> vec;
-    while (mu_next_command(ctx, &cmd))
-        vec.push_back(cmd);
-    return vec;
-}
-
 static std::string my_mu_cmd_text_str(mu_Command *cmd) {
     return cmd->text.str;
 }
 
-static auto my_mu_button(mu_Context *ctx, const std::string& label) {
+static auto my_mu_button(mu_Context *ctx, const std::string &label) {
     return mu_button(ctx, label.c_str());
 }
 
@@ -34,7 +27,7 @@ static auto my_mu_text(mu_Context *ctx, const std::string &text) {
     return mu_text(ctx, text.c_str());
 }
 
-static auto my_mu_begin_window(mu_Context *ctx, const std::string& title, mu_Rect rect) {
+static auto my_mu_begin_window(mu_Context *ctx, const std::string &title, mu_Rect rect) {
     return mu_begin_window(ctx, title.c_str(), rect);
 }
 
@@ -46,11 +39,17 @@ static void my_set_text_height_callback(mu_Context *ctx, intptr_t callback) {
     ctx->text_height = (int (*)(mu_Font))callback;
 }
 
-static mu_Command *CommandList_at(std::vector<mu_Command *> &vec, size_t x) {
-    return vec.at(x);
-}
-
 using namespace emscripten;
+
+EMSCRIPTEN_DECLARE_VAL_TYPE(CommandList);
+
+static CommandList my_mu_commands(mu_Context *ctx) {
+    mu_Command *cmd = NULL;
+    std::vector<mu_Command *> vec;
+    while (mu_next_command(ctx, &cmd))
+        vec.push_back(cmd);
+    return CommandList(val::array(vec));
+}
 
 EMSCRIPTEN_BINDINGS(microui) {
     class_<mu_Context>("Context")
@@ -142,10 +141,6 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("set_text_height_callback", my_set_text_height_callback, allow_raw_pointers())
         .function("commands", my_mu_commands, allow_raw_pointers());
 
-    class_<std::vector<mu_Command *>>("CommandList")
-        .function("size", &std::vector<mu_Command *>::size)
-        .function("at", CommandList_at, allow_raw_pointers());
-
     value_object<mu_Vec2>("Vec2").field("x", &mu_Vec2::x).field("y", &mu_Vec2::y);
 
     value_object<mu_Rect>("Rect")
@@ -183,6 +178,8 @@ EMSCRIPTEN_BINDINGS(microui) {
         .property("id", &mu_IconCommand::id)
         .property("rect", &mu_IconCommand::rect)
         .property("color", &mu_IconCommand::color);
+
+    register_type<CommandList>("Command[]");
 
     constant<int>("COMMAND_CLIP", MU_COMMAND_CLIP);
     constant<int>("COMMAND_RECT", MU_COMMAND_RECT);
