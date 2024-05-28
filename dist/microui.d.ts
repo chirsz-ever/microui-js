@@ -38,22 +38,29 @@ export interface Context {
   layout_next(): Rect;
   mouse_over(_0: Rect): number;
   set_focus(_0: number): void;
+  draw_control_frame(_0: number, _1: Rect, _2: number, _3: number): void;
   update_control(_0: number, _1: Rect, _2: number): void;
   set_text_width_callback(_0: number): void;
   set_text_height_callback(_0: number): void;
   slider(_0: number, _1: number, _2: number): number;
   get_container(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): Container;
   draw_control_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number, _3: number): void;
+  text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   label(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
+  button_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number, _2: number): number;
   checkbox(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
+  slider_ex(_0: number, _1: number, _2: number, _3: number, _4: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _5: number): number;
   header_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
+  begin_treenode_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
+  begin_window_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number): number;
   open_popup(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   begin_popup(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
+  begin_panel_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): void;
   button(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
-  text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   header(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
-  begin_window(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect): number;
   begin_treenode(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
+  begin_window(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect): number;
+  begin_panel(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   delete(): void;
 }
 
@@ -63,7 +70,7 @@ export interface Command {
   rect: RectCommand;
   icon: IconCommand;
   type: number;
-  text_str(): string;
+  readonly text_str: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string;
   delete(): void;
 }
 
@@ -123,6 +130,8 @@ interface EmbindModule {
   RectCommand: {};
   IconCommand: {};
   Container: {};
+  CLIP_PART: number;
+  CLIP_ALL: number;
   COMMAND_CLIP: number;
   COMMAND_RECT: number;
   COMMAND_TEXT: number;
