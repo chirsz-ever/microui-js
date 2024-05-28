@@ -1,13 +1,16 @@
 // TypeScript bindings for emscripten-generated code.  Automatically generated at compile time.
 interface WasmModule {
+  _malloc(_0: number): number;
 }
 
 export interface Context {
   commands(): Command[];
+  get_current_container(): Container;
   begin(): void;
   end(): void;
   pop_id(): void;
   pop_clip_rect(): void;
+  bring_to_front(_0: Container): void;
   layout_begin_column(): void;
   layout_end_column(): void;
   end_treenode(): void;
@@ -21,6 +24,7 @@ export interface Context {
   input_keydown(_0: number): void;
   input_keyup(_0: number): void;
   push_command(_0: number, _1: number): Command;
+  layout_row(_0: number[], _1: number): void;
   layout_width(_0: number): void;
   layout_height(_0: number): void;
   push_clip_rect(_0: Rect): void;
@@ -37,9 +41,19 @@ export interface Context {
   update_control(_0: number, _1: Rect, _2: number): void;
   set_text_width_callback(_0: number): void;
   set_text_height_callback(_0: number): void;
+  slider(_0: number, _1: number, _2: number): number;
+  get_container(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): Container;
+  draw_control_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number, _3: number): void;
+  label(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
+  checkbox(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
+  header_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
+  open_popup(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
+  begin_popup(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
   button(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
   text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
+  header(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
   begin_window(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect): number;
+  begin_treenode(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
   delete(): void;
 }
 
@@ -77,6 +91,11 @@ export interface IconCommand {
   delete(): void;
 }
 
+export interface Container {
+  rect: Rect;
+  delete(): void;
+}
+
 export type Color = {
   r: number,
   g: number,
@@ -103,6 +122,7 @@ interface EmbindModule {
   ClipCommand: {};
   RectCommand: {};
   IconCommand: {};
+  Container: {};
   COMMAND_CLIP: number;
   COMMAND_RECT: number;
   COMMAND_TEXT: number;

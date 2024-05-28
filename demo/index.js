@@ -152,12 +152,15 @@ function set_clip_rect(ctx2d, rect) {
 }
 
 function hex2(c) {
-    const h = c.toString(16);
+    const h = c.toString(16).toUpperCase();
     return h.length == 1 ? "0" + h : h;
 }
 
 function color_to_hex(color) {
-    return "#" + hex2(color.r) + hex2(color.g) + hex2(color.b) + hex2(color.a);
+    let str = "#" + hex2(color.r) + hex2(color.g) + hex2(color.b);
+    if (color.a && color.a < 255)
+        str += hex2(color.a);
+    return str;
 }
 
 function mu_rect(x, y, w, h) {
@@ -166,10 +169,37 @@ function mu_rect(x, y, w, h) {
 
 // User code
 
+const get_bg = function () {
+    // float[3]
+    let bg;
+
+    return function () {
+        if (bg === undefined) {
+            bg = microui._malloc(3 * 4);
+            microui.HEAPF32.set([90, 95, 100], bg / 4);
+        }
+        return bg;
+    };
+}();
+
+function get_bg_color() {
+    const bg = get_bg() / 4;
+    return {
+        r: microui.HEAPF32[bg] | 0,
+        g: microui.HEAPF32[bg + 1] | 0,
+        b: microui.HEAPF32[bg + 2] | 0,
+        a: 255,
+    };
+}
+
+function get_bg_color_str() {
+    return color_to_hex(get_bg_color());
+}
+
 function draw() {
     process_frame(mctx);
 
-    ctx2d.fillStyle = "#ddd"
+    ctx2d.fillStyle = get_bg_color_str();
     ctx2d.fillRect(0, 0, canvas.width, canvas.height);
 
     process_commands(mctx, ctx2d);
@@ -180,7 +210,7 @@ function draw() {
 let count = 0;
 
 function my_test_window(ctx) {
-    if (ctx.begin_window("Test Window", mu_rect(40, 40, 120, 80))) {
+    if (ctx.begin_window("Test Window", mu_rect(670, 40, 120, 80))) {
         if (ctx.button("count")) {
             count += 1;
         }
@@ -189,8 +219,119 @@ function my_test_window(ctx) {
     }
 }
 
+function write_log(message) {
+    console.log(message);
+}
+
+// int[3]
+let checks;
+
+// from https://github.com/rxi/microui/blob/master/demo/main.c
+function test_window(ctx) {
+    /* do window */
+    if (ctx.begin_window("Demo Window", mu_rect(40, 40, 300, 450))) {
+        const win = ctx.get_current_container();
+        // WORKAROUND
+        const rect = win.rect;
+        rect.w = Math.max(rect.w, 240);
+        rect.h = Math.max(rect.h, 300);
+        win.rect = rect;
+
+        /* window info */
+        if (ctx.header("Window Info")) {
+            const win = ctx.get_current_container();
+            ctx.layout_row([54, -1], 0);
+            ctx.label("Position:");
+            ctx.label(`${win.rect.x}, ${win.rect.y}`);
+            ctx.label("Size:");
+            ctx.label(`${win.rect.w}, ${win.rect.h}`);
+        }
+
+        /* labels + buttons */
+        if (ctx.header_ex("Test Buttons", microui.OPT_EXPANDED)) {
+            ctx.layout_row([86, -110, -1], 0);
+            ctx.label("Test buttons 1:");
+            if (ctx.button("Button 1")) { write_log("Pressed button 1"); }
+            if (ctx.button("Button 2")) { write_log("Pressed button 2"); }
+            ctx.label("Test buttons 2:");
+            if (ctx.button("Button 3")) { write_log("Pressed button 3"); }
+            if (ctx.button("Popup")) { ctx.open_popup("Test Popup"); }
+            if (ctx.begin_popup("Test Popup")) {
+                ctx.button("Hello");
+                ctx.button("World");
+                ctx.end_popup();
+            }
+        }
+
+        /* tree */
+        if (ctx.header_ex("Tree and Text", microui.OPT_EXPANDED)) {
+            ctx.layout_row([140, - 1], 0);
+            ctx.layout_begin_column();
+            if (ctx.begin_treenode("Test 1")) {
+                if (ctx.begin_treenode("Test 1a")) {
+                    ctx.label("Hello");
+                    ctx.label("world");
+                    ctx.end_treenode();
+                }
+                if (ctx.begin_treenode("Test 1b")) {
+                    if (ctx.button("Button 1")) { write_log("Pressed button 1"); }
+                    if (ctx.button("Button 2")) { write_log("Pressed button 2"); }
+                    ctx.end_treenode();
+                }
+                ctx.end_treenode();
+            }
+            if (ctx.begin_treenode("Test 2")) {
+                ctx.layout_row([54, 54], 0);
+                if (ctx.button("Button 3")) { write_log("Pressed button 3"); }
+                if (ctx.button("Button 4")) { write_log("Pressed button 4"); }
+                if (ctx.button("Button 5")) { write_log("Pressed button 5"); }
+                if (ctx.button("Button 6")) { write_log("Pressed button 6"); }
+                ctx.end_treenode();
+            }
+            if (ctx.begin_treenode("Test 3")) {
+                if (checks === undefined) {
+                    checks = microui._malloc(3 * 4);
+                    microui.HEAP32.set([1, 0, 1], checks / 4);
+                }
+                ctx.checkbox("Checkbox 1", checks);
+                ctx.checkbox("Checkbox 2", checks + 4);
+                ctx.checkbox("Checkbox 3", checks + 8);
+                ctx.end_treenode();
+            }
+            ctx.layout_end_column();
+
+            ctx.layout_begin_column();
+            ctx.layout_row([-1], 0);
+            ctx.text("Lorem ipsum dolor sit amet, consectetur adipiscing "
+                + "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
+                + "ipsum, eu varius magna felis a nulla.");
+            ctx.layout_end_column();
+        }
+
+        /* background color sliders */
+        if (ctx.header_ex("Background Color", microui.OPT_EXPANDED)) {
+            ctx.layout_row([-78, -1], 74);
+            /* sliders */
+            const bg = get_bg();
+            ctx.layout_begin_column();
+            ctx.layout_row([46, -1], 0);
+            ctx.label("Red:"); ctx.slider(bg, 0, 255);
+            ctx.label("Green:"); ctx.slider(bg + 4, 0, 255);
+            ctx.label("Blue:"); ctx.slider(bg + 8, 0, 255);
+            ctx.layout_end_column();
+            /* color preview */
+            const r = ctx.layout_next();
+            ctx.draw_rect(r, get_bg_color());
+            ctx.draw_control_text(get_bg_color_str(), r, microui.COLOR_TEXT, microui.OPT_ALIGNCENTER);
+        }
+
+        ctx.end_window();
+    }
+}
+
 function process_frame(ctx) {
     ctx.begin();
     my_test_window(ctx);
+    test_window(ctx);
     ctx.end();
 }

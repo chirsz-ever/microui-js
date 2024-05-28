@@ -2,6 +2,7 @@ dist/microui.mjs: src/microui.c src/binder.cpp
 	emcc -lembind \
 		-sALLOW_TABLE_GROWTH \
 		-sALLOW_MEMORY_GROWTH \
+		-sEXPORTED_FUNCTIONS=_malloc \
 		-sEXPORTED_RUNTIME_METHODS=addFunction,UTF8ToString \
 		-g \
 		-o $@ \

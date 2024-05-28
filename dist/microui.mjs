@@ -27,7 +27,7 @@ Module['ready'] = new Promise((resolve, reject) => {
   readyPromiseResolve = resolve;
   readyPromiseReject = reject;
 });
-["_memory","___indirect_function_table","onRuntimeInitialized"].forEach((prop) => {
+["_malloc","_memory","___indirect_function_table","onRuntimeInitialized"].forEach((prop) => {
   if (!Object.getOwnPropertyDescriptor(Module['ready'], prop)) {
     Object.defineProperty(Module['ready'], prop, {
       get: () => abort('You are getting ' + prop + ' on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js'),
@@ -3327,6 +3327,32 @@ function dbg(...args) {
       });
     };
 
+  
+  
+  
+  var requireRegisteredType = (rawType, humanName) => {
+      var impl = registeredTypes[rawType];
+      if (undefined === impl) {
+        throwBindingError(`${humanName} has unknown type ${getTypeName(rawType)}`);
+      }
+      return impl;
+    };
+  
+  var emval_returnValue = (returnType, destructorsRef, handle) => {
+      var destructors = [];
+      var result = returnType['toWireType'](destructors, handle);
+      if (destructors.length) {
+        // void, primitives and any other types w/o destructors don't need to allocate a handle
+        HEAPU32[((destructorsRef)>>2)] = Emval.toHandle(destructors);
+      }
+      return result;
+    };
+  var __emval_as = (handle, returnType, destructorsRef) => {
+      handle = Emval.toValue(handle);
+      returnType = requireRegisteredType(returnType, 'emval::as');
+      return emval_returnValue(returnType, destructorsRef, handle);
+    };
+
   var emval_symbols = {
   };
   
@@ -3348,21 +3374,31 @@ function dbg(...args) {
     };
 
 
+  
+  
+  var emval_get_global = () => {
+      if (typeof globalThis == 'object') {
+        return globalThis;
+      }
+      return (function(){
+        return Function;
+      })()('return this')();
+    };
+  var __emval_get_global = (name) => {
+      if (name===0) {
+        return Emval.toHandle(emval_get_global());
+      } else {
+        name = getStringOrSymbol(name);
+        return Emval.toHandle(emval_get_global()[name]);
+      }
+    };
+
   var emval_addMethodCaller = (caller) => {
       var id = emval_methodCallers.length;
       emval_methodCallers.push(caller);
       return id;
     };
   
-  
-  
-  var requireRegisteredType = (rawType, humanName) => {
-      var impl = registeredTypes[rawType];
-      if (undefined === impl) {
-        throwBindingError(`${humanName} has unknown type ${getTypeName(rawType)}`);
-      }
-      return impl;
-    };
   var emval_lookupTypes = (argCount, argTypes) => {
       var a = new Array(argCount);
       for (var i = 0; i < argCount; ++i) {
@@ -3375,15 +3411,6 @@ function dbg(...args) {
   
   var reflectConstruct = Reflect.construct;
   
-  var emval_returnValue = (returnType, destructorsRef, handle) => {
-      var destructors = [];
-      var result = returnType['toWireType'](destructors, handle);
-      if (destructors.length) {
-        // void, primitives and any other types w/o destructors don't need to allocate a handle
-        HEAPU32[((destructorsRef)>>2)] = Emval.toHandle(destructors);
-      }
-      return result;
-    };
   
   var __emval_get_method_caller = (argCount, argTypes, kind) => {
       var types = emval_lookupTypes(argCount, argTypes);
@@ -3426,13 +3453,28 @@ function dbg(...args) {
       return emval_addMethodCaller(createNamedFunction(functionName, invokerFunction));
     };
 
+  var __emval_get_property = (handle, key) => {
+      handle = Emval.toValue(handle);
+      key = Emval.toValue(key);
+      return Emval.toHandle(handle[key]);
+    };
+
   var __emval_incref = (handle) => {
       if (handle > 9) {
         emval_handles[handle + 1] += 1;
       }
     };
 
+  var __emval_instanceof = (object, constructor) => {
+      object = Emval.toValue(object);
+      constructor = Emval.toValue(constructor);
+      return object instanceof constructor;
+    };
+
   var __emval_new_array = () => Emval.toHandle([]);
+
+  
+  var __emval_new_cstring = (v) => Emval.toHandle(getStringOrSymbol(v));
 
   
   
@@ -3440,6 +3482,13 @@ function dbg(...args) {
       var destructors = Emval.toValue(handle);
       runDestructors(destructors);
       __emval_decref(handle);
+    };
+
+  
+  var __emval_take_value = (type, arg) => {
+      type = requireRegisteredType(type, '_emval_take_value');
+      var v = type['readValueFromPointer'](arg);
+      return Emval.toHandle(v);
     };
 
   var _abort = () => {
@@ -3835,17 +3884,29 @@ var wasmImports = {
   /** @export */
   _embind_register_void: __embind_register_void,
   /** @export */
+  _emval_as: __emval_as,
+  /** @export */
   _emval_call_method: __emval_call_method,
   /** @export */
   _emval_decref: __emval_decref,
   /** @export */
+  _emval_get_global: __emval_get_global,
+  /** @export */
   _emval_get_method_caller: __emval_get_method_caller,
+  /** @export */
+  _emval_get_property: __emval_get_property,
   /** @export */
   _emval_incref: __emval_incref,
   /** @export */
+  _emval_instanceof: __emval_instanceof,
+  /** @export */
   _emval_new_array: __emval_new_array,
   /** @export */
+  _emval_new_cstring: __emval_new_cstring,
+  /** @export */
   _emval_run_destructors: __emval_run_destructors,
+  /** @export */
+  _emval_take_value: __emval_take_value,
   /** @export */
   abort: _abort,
   /** @export */
@@ -3861,7 +3922,7 @@ var wasmImports = {
 };
 var wasmExports = createWasm();
 var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors');
-var _malloc = createExportWrapper('malloc');
+var _malloc = Module['_malloc'] = createExportWrapper('malloc');
 var ___getTypeName = createExportWrapper('__getTypeName');
 var _fflush = createExportWrapper('fflush');
 var _free = createExportWrapper('free');
@@ -4046,7 +4107,6 @@ var missingLibrarySymbols = [
   'registerInheritedInstance',
   'unregisterInheritedInstance',
   'enumReadValueFromPointer',
-  'emval_get_global',
 ];
 missingLibrarySymbols.forEach(missingLibrarySymbol)
 
@@ -4244,6 +4304,7 @@ var unexportedSymbols = [
   'count_emval_handles',
   'getStringOrSymbol',
   'Emval',
+  'emval_get_global',
   'emval_returnValue',
   'emval_lookupTypes',
   'emval_methodCallers',

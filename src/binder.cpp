@@ -1,13 +1,15 @@
-extern "C" {
-#include "microui.h"
-}
-
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <string>
 #include <vector>
+
+extern "C" {
+#include "microui.h"
+}
 
 static mu_Context *my_new_mu_Context() {
     mu_Context *ctx = new mu_Context;
@@ -17,14 +19,6 @@ static mu_Context *my_new_mu_Context() {
 
 static std::string my_mu_cmd_text_str(mu_Command *cmd) {
     return cmd->text.str;
-}
-
-static auto my_mu_button(mu_Context *ctx, const std::string &label) {
-    return mu_button(ctx, label.c_str());
-}
-
-static auto my_mu_text(mu_Context *ctx, const std::string &text) {
-    return mu_text(ctx, text.c_str());
 }
 
 static auto my_mu_begin_window(mu_Context *ctx, const std::string &title, mu_Rect rect) {
@@ -39,8 +33,42 @@ static void my_set_text_height_callback(mu_Context *ctx, intptr_t callback) {
     ctx->text_height = (int (*)(mu_Font))callback;
 }
 
+static auto my_mu_checkbox(mu_Context *ctx, const std::string &label, intptr_t state) {
+    return mu_checkbox(ctx, label.c_str(), (int *)state);
+}
+
+static auto my_mu_slider(mu_Context *ctx, intptr_t value, mu_Real lo, mu_Real hi) {
+    return mu_slider(ctx, (mu_Real *)value, lo, hi);
+}
+
+static auto my_mu_draw_control_text(mu_Context *ctx, const std::string &str, mu_Rect rect, int colorid, int opt) {
+    return mu_draw_control_text(ctx, str.c_str(), rect, colorid, opt);
+}
+
+#define CONVERT_MY_FUNC_STR(func)                                    \
+    static auto my_##func(mu_Context *ctx, const std::string &str) { \
+        return func(ctx, str.c_str());                               \
+    }
+
+#define CONVERT_MY_FUNC_STR_OPT(func)                                         \
+    static auto my_##func(mu_Context *ctx, const std::string &str, int opt) { \
+        return func(ctx, str.c_str(), opt);                                   \
+    }
+
+CONVERT_MY_FUNC_STR(mu_text);
+CONVERT_MY_FUNC_STR(mu_button);
+CONVERT_MY_FUNC_STR(mu_label);
+CONVERT_MY_FUNC_STR(mu_header);
+CONVERT_MY_FUNC_STR(mu_get_container);
+CONVERT_MY_FUNC_STR(mu_open_popup);
+CONVERT_MY_FUNC_STR(mu_begin_popup);
+CONVERT_MY_FUNC_STR(mu_begin_treenode);
+
+CONVERT_MY_FUNC_STR_OPT(mu_header_ex);
+
 using namespace emscripten;
 
+EMSCRIPTEN_DECLARE_VAL_TYPE(NumberList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(CommandList);
 
 static CommandList my_mu_commands(mu_Context *ctx) {
@@ -49,6 +77,19 @@ static CommandList my_mu_commands(mu_Context *ctx) {
     while (mu_next_command(ctx, &cmd))
         vec.push_back(cmd);
     return CommandList(val::array(vec));
+}
+
+static void my_mu_layout_row(mu_Context *ctx, NumberList widths, int height) {
+    if (!widths.isArray()) {
+        fputs("layout_row get a non-array argument\n", stderr);
+        return;
+    }
+    std::vector<int> widths_vec;
+    size_t length = widths["length"].as<size_t>();
+    for (size_t i = 0; i < length; ++i) {
+        widths_vec.push_back(widths[i].as<int>());
+    }
+    mu_layout_row(ctx, widths_vec.size(), widths_vec.data(), height);
 }
 
 EMSCRIPTEN_BINDINGS(microui) {
@@ -65,10 +106,9 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("pop_clip_rect", mu_pop_clip_rect, allow_raw_pointers())
         .function("get_clip_rect", mu_get_clip_rect, allow_raw_pointers())
         .function("check_clip", mu_check_clip, allow_raw_pointers())
-        // need bind `mu_Container`
-        // .function("get_current_container", mu_get_current_container, allow_raw_pointers())
-        // .function("get_container", mu_get_container, allow_raw_pointers())
-        // .function("bring_to_front", mu_bring_to_front, allow_raw_pointers())
+        .function("get_current_container", mu_get_current_container, allow_raw_pointers())
+        .function("get_container", my_mu_get_container, allow_raw_pointers())
+        .function("bring_to_front", mu_bring_to_front, allow_raw_pointers())
         // need bind `mu_PoolItem`
         // .function("pool_init", mu_pool_init, allow_raw_pointers())
         // .function("pool_get", mu_pool_get, allow_raw_pointers())
@@ -89,7 +129,7 @@ EMSCRIPTEN_BINDINGS(microui) {
         // TODO: const char*
         // .function("draw_text", mu_draw_text, allow_raw_pointers())
         .function("draw_icon", mu_draw_icon, allow_raw_pointers())
-        // .function("layout_row", mu_layout_row, allow_raw_pointers())
+        .function("layout_row", my_mu_layout_row, allow_raw_pointers())
         .function("layout_width", mu_layout_width, allow_raw_pointers())
         .function("layout_height", mu_layout_height, allow_raw_pointers())
         .function("layout_begin_column", mu_layout_begin_column, allow_raw_pointers())
@@ -98,47 +138,44 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("layout_next", mu_layout_next, allow_raw_pointers())
         // TODO: const char*
         // .function("draw_control_frame", mu_draw_control_frame, allow_raw_pointers())
-        // .function("draw_control_text", mu_draw_control_text, allow_raw_pointers())
+        .function("draw_control_text", my_mu_draw_control_text, allow_raw_pointers())
         .function("mouse_over", mu_mouse_over, allow_raw_pointers())
         .function("update_control", mu_update_control, allow_raw_pointers())
         // TODO: const char* or other pointer
         // .function("text", mu_text, allow_raw_pointers())
-        // .function("label", mu_label, allow_raw_pointers())
+        .function("label", my_mu_label, allow_raw_pointers())
         // .function("button_ex", mu_button_ex, allow_raw_pointers())
-        // .function("checkbox", mu_checkbox, allow_raw_pointers())
+        .function("checkbox", my_mu_checkbox, allow_raw_pointers())
         // .function("textbox_raw", mu_textbox_raw, allow_raw_pointers())
         // .function("textbox_ex", mu_textbox_ex, allow_raw_pointers())
         // .function("slider_ex", mu_slider_ex, allow_raw_pointers())
         // .function("number_ex", mu_number_ex, allow_raw_pointers())
-        // .function("header_ex", mu_header_ex, allow_raw_pointers())
+        .function("header_ex", my_mu_header_ex, allow_raw_pointers())
         // .function("begin_treenode_ex", mu_begin_treenode_ex, allow_raw_pointers())
         .function("end_treenode", mu_end_treenode, allow_raw_pointers())
         // TODO: const char*
         // .function("begin_window_ex", mu_begin_window_ex, allow_raw_pointers())
         .function("end_window", mu_end_window, allow_raw_pointers())
-        // TODO: const char*
-        // .function("open_popup", mu_open_popup, allow_raw_pointers())
-        // .function("begin_popup", mu_begin_popup, allow_raw_pointers())
+        .function("open_popup", my_mu_open_popup, allow_raw_pointers())
+        .function("begin_popup", my_mu_begin_popup, allow_raw_pointers())
         .function("end_popup", mu_end_popup, allow_raw_pointers())
         // TODO: const char*
         // .function("begin_panel_ex", mu_begin_panel_ex, allow_raw_pointers())
         .function("end_panel", mu_end_panel, allow_raw_pointers())
         // macros
         // TODO: const char*
-        // .function("button", static_mu_button, allow_raw_pointers())
         // .function("textbox", static_mu_textbox, allow_raw_pointers())
-        // .function("slider", static_mu_slider, allow_raw_pointers())
         // .function("number", static_mu_number, allow_raw_pointers())
-        // .function("header", static_mu_header, allow_raw_pointers())
-        // .function("begin_treenode", static_mu_begin_treenode, allow_raw_pointers())
-        // .function("begin_window", static_mu_begin_window, allow_raw_pointers())
         // .function("begin_panel", static_mu_begin_panel, allow_raw_pointers())
         // workaround
         .function("button", my_mu_button, allow_raw_pointers())
         .function("text", my_mu_text, allow_raw_pointers())
+        .function("header", my_mu_header, allow_raw_pointers())
         .function("begin_window", my_mu_begin_window, allow_raw_pointers())
+        .function("begin_treenode", my_mu_begin_treenode, allow_raw_pointers())
         .function("set_text_width_callback", my_set_text_width_callback, allow_raw_pointers())
         .function("set_text_height_callback", my_set_text_height_callback, allow_raw_pointers())
+        .function("slider", my_mu_slider, allow_raw_pointers())
         .function("commands", my_mu_commands, allow_raw_pointers());
 
     value_object<mu_Vec2>("Vec2").field("x", &mu_Vec2::x).field("y", &mu_Vec2::y);
@@ -180,6 +217,9 @@ EMSCRIPTEN_BINDINGS(microui) {
         .property("color", &mu_IconCommand::color);
 
     register_type<CommandList>("Command[]");
+    register_type<NumberList>("number[]");
+
+    class_<mu_Container>("Container").property("rect", &mu_Container::rect);
 
     constant<int>("COMMAND_CLIP", MU_COMMAND_CLIP);
     constant<int>("COMMAND_RECT", MU_COMMAND_RECT);
