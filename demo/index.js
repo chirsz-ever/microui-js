@@ -62,7 +62,7 @@ MicroUiModule().then((Module) => {
         mctx.input_scroll(ev.offsetX, ev.offsetY);
     });
 
-    window.requestAnimationFrame(draw);
+    setTimeout(() => window.requestAnimationFrame(draw), 0);
 })
 
 /**
@@ -242,26 +242,20 @@ function draw() {
     window.requestAnimationFrame(draw);
 }
 
-let count = 0;
+// demo code is from https://github.com/rxi/microui/blob/master/demo/main.c
 
-function my_test_window(ctx) {
-    if (ctx.begin_window("Test Window", mu_rect(670, 40, 120, 80))) {
-        if (ctx.button("count")) {
-            count += 1;
-        }
-        ctx.text(`count: ${count}`);
-        ctx.end_window();
-    }
-}
-
-function write_log(message) {
-    console.log(message);
+let logbuf = "";
+let logbuf_updated = false;
+function write_log(text) {
+    if (logbuf.length != 0)
+        logbuf += "\n";
+    logbuf += text;
+    logbuf_updated = true;
 }
 
 // int[3]
 let checks;
 
-// from https://github.com/rxi/microui/blob/master/demo/main.c
 function test_window(ctx) {
     /* do window */
     if (ctx.begin_window("Demo Window", mu_rect(40, 40, 300, 450))) {
@@ -364,9 +358,114 @@ function test_window(ctx) {
     }
 }
 
+function log_window(ctx) {
+    if (ctx.begin_window("Log Window", mu_rect(350, 40, 300, 200))) {
+        /* output text panel */
+        ctx.layout_row([-1], -25);
+        ctx.begin_panel("Log Output");
+        const panel = ctx.get_current_container();
+        ctx.layout_row([-1], -1);
+        ctx.text(logbuf);
+        ctx.end_panel();
+        if (logbuf_updated) {
+            // WORKAROUND
+            panel.scroll = Object.assign(panel.scroll, { y: panel.content_size.y });
+            logbuf_updated = 0;
+        }
+
+        /* input textbox + submit button */
+        // TODO
+        if (false) {
+            let buf = [128];
+            let submitted = 0;
+            ctx.layout_row([-70, -1], 0);
+            if (ctx.textbox(buf, sizeof(buf)) & microui.RES_SUBMIT) {
+                ctx.set_focus(ctx.last_id);
+                submitted = 1;
+            }
+            if (ctx.button("Submit")) { submitted = 1; }
+            if (submitted) {
+                write_log(buf);
+                buf[0] = '\0';
+            }
+        }
+
+        ctx.end_window();
+    }
+}
+
+let tmp;
+function uint8_slider(ctx, u8ptr, low, high) {
+    if (tmp === undefined) {
+        tmp = microui._malloc(4);
+    }
+    ctx.push_id_ptr(u8ptr);
+    microui.HEAPF32[tmp / 4] = microui.HEAPU8[u8ptr];
+    let res = ctx.slider_ex(tmp, low, high, 0, "%.0f", microui.OPT_ALIGNCENTER);
+    microui.HEAPU8[u8ptr] = microui.HEAPF32[tmp / 4] | 0;
+    ctx.pop_id();
+    return res;
+}
+
+let color_infos;
+function style_window(ctx) {
+    if (color_infos === undefined) {
+        color_infos = [
+            ["text:", microui.COLOR_TEXT],
+            ["border:", microui.COLOR_BORDER],
+            ["windowbg:", microui.COLOR_WINDOWBG],
+            ["titlebg:", microui.COLOR_TITLEBG],
+            ["titletext:", microui.COLOR_TITLETEXT],
+            ["panelbg:", microui.COLOR_PANELBG],
+            ["button:", microui.COLOR_BUTTON],
+            ["buttonhover:", microui.COLOR_BUTTONHOVER],
+            ["buttonfocus:", microui.COLOR_BUTTONFOCUS],
+            ["base:", microui.COLOR_BASE],
+            ["basehover:", microui.COLOR_BASEHOVER],
+            ["basefocus:", microui.COLOR_BASEFOCUS],
+            ["scrollbase:", microui.COLOR_SCROLLBASE],
+            ["scrollthumb:", microui.COLOR_SCROLLTHUMB],
+        ]
+    }
+    if (ctx.begin_window("Style Editor", mu_rect(350, 250, 300, 240))) {
+        const sw = ctx.get_current_container().body.w * 0.14;
+        ctx.layout_row([80, sw, sw, sw, sw, -1], 0);
+        const base_addr = ctx.style_colors_addr();
+        for (let i = 0; i < color_infos.length; ++i) {
+            ctx.label(color_infos[i][0]);
+            const color_addr = base_addr + i * 4;
+            uint8_slider(ctx, color_addr, 0, 255);
+            uint8_slider(ctx, color_addr + 1, 0, 255);
+            uint8_slider(ctx, color_addr + 2, 0, 255);
+            uint8_slider(ctx, color_addr + 3, 0, 255);
+            const color = {
+                r: microui.HEAPU8[color_addr],
+                g: microui.HEAPU8[color_addr + 1],
+                b: microui.HEAPU8[color_addr + 2],
+                a: microui.HEAPU8[color_addr + 3],
+            }
+            ctx.draw_rect(ctx.layout_next(), color);
+        }
+        ctx.end_window();
+    }
+}
+
+let count = 0;
+function my_test_window(ctx) {
+    if (ctx.begin_window("Test Window", mu_rect(670, 40, 120, 80))) {
+        if (ctx.button("count")) {
+            count += 1;
+        }
+        ctx.text(`count: ${count}`);
+        ctx.end_window();
+    }
+}
+
 function process_frame(ctx) {
     ctx.begin();
-    my_test_window(ctx);
     test_window(ctx);
+    log_window(ctx);
+    style_window(ctx);
+    my_test_window(ctx);
     ctx.end();
 }

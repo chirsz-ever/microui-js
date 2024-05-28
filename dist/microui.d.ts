@@ -40,8 +40,10 @@ export interface Context {
   set_focus(_0: number): void;
   draw_control_frame(_0: number, _1: Rect, _2: number, _3: number): void;
   update_control(_0: number, _1: Rect, _2: number): void;
+  push_id_ptr(_0: number): void;
   set_text_width_callback(_0: number): void;
   set_text_height_callback(_0: number): void;
+  style_colors_addr(): number;
   slider(_0: number, _1: number, _2: number): number;
   get_container(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): Container;
   draw_control_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number, _3: number): void;
@@ -99,7 +101,10 @@ export interface IconCommand {
 }
 
 export interface Container {
+  scroll: Vec2;
+  content_size: Vec2;
   rect: Rect;
+  body: Rect;
   delete(): void;
 }
 

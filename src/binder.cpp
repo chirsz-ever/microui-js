@@ -46,6 +46,14 @@ static auto my_mu_draw_control_text(mu_Context *ctx, const std::string &str, mu_
     return mu_draw_control_text(ctx, str.c_str(), rect, colorid, opt);
 }
 
+static void my_mu_push_id_ptr(mu_Context *ctx, intptr_t p) {
+    mu_push_id(ctx, &p, sizeof(p));
+}
+
+static intptr_t my_mu_style_colors_addr(const mu_Context &ctx) {
+    return (intptr_t)&ctx.style->colors;
+}
+
 #define CONVERT_MY_FUNC_STR(func, ...)                                              \
     static auto my_##func(mu_Context *ctx, const std::string &str, ##__VA_ARGS__) { \
         return func(ctx, str.c_str(), ##__VA_ARGS__);                               \
@@ -104,7 +112,7 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("set_focus", mu_set_focus, allow_raw_pointers())
         // need bind `void*`
         // .function("get_id", mu_get_id, allow_raw_pointers())
-        // .function("push_id", mu_push_id, allow_raw_pointers())
+        .function("push_id_ptr", my_mu_push_id_ptr, allow_raw_pointers())
         .function("pop_id", mu_pop_id, allow_raw_pointers())
         .function("push_clip_rect", mu_push_clip_rect, allow_raw_pointers())
         .function("pop_clip_rect", mu_pop_clip_rect, allow_raw_pointers())
@@ -172,7 +180,8 @@ EMSCRIPTEN_BINDINGS(microui) {
         // workaround
         .function("set_text_width_callback", my_set_text_width_callback, allow_raw_pointers())
         .function("set_text_height_callback", my_set_text_height_callback, allow_raw_pointers())
-        .function("commands", my_mu_commands, allow_raw_pointers());
+        .function("commands", my_mu_commands, allow_raw_pointers())
+        .function("style_colors_addr", my_mu_style_colors_addr);
 
     value_object<mu_Vec2>("Vec2").field("x", &mu_Vec2::x).field("y", &mu_Vec2::y);
 
@@ -215,7 +224,11 @@ EMSCRIPTEN_BINDINGS(microui) {
     register_type<CommandList>("Command[]");
     register_type<NumberList>("number[]");
 
-    class_<mu_Container>("Container").property("rect", &mu_Container::rect);
+    class_<mu_Container>("Container")
+        .property("rect", &mu_Container::rect)
+        .property("body", &mu_Container::body)
+        .property("scroll", &mu_Container::scroll)
+        .property("content_size", &mu_Container::content_size);
 
     constant<int>("CLIP_PART", MU_CLIP_PART);
     constant<int>("CLIP_ALL", MU_CLIP_ALL);
