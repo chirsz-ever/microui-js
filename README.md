@@ -10,6 +10,14 @@ run `make`.
 
 ## Run the demo
 
+Run
+
+```sh
+python3 -m http.server
+```
+
+and visit <http://localhost:8000/demo/index.html>.
+
 ## TODO
 
 - [ ] split canvas2d renderer
