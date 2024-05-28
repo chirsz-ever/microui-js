@@ -112,6 +112,9 @@ function draw_rect(ctx2d, rect, color) {
  * @param {CanvasRenderingContext2D} ctx2d
  */
 function draw_icon(ctx2d, icon_id, rect, color) {
+    if (enable_debug) {
+        draw_rect(ctx2d, rect, { r: 10, g: 10, b: 250, a: 190 });
+    }
     switch (icon_id) {
         case microui.ICON_CLOSE: {
             ctx2d.strokeStyle = color_to_hex(color);
@@ -128,15 +131,47 @@ function draw_icon(ctx2d, icon_id, rect, color) {
             break;
         }
         case microui.ICON_CHECK: {
-            // TODO: v
+            ctx2d.strokeStyle = color_to_hex(color);
+            ctx2d.lineWidth = 1.25;
+            ctx2d.lineCap = "square";
+            ctx2d.strokeStyle = "white";
+            const dy1 = 0.55;
+            const dx1 = 0.2;
+            const dx2 = 0.15;
+            const dx3 = 0.4;
+            ctx2d.beginPath();
+            ctx2d.moveTo(rect.x + rect.w * dx1, rect.y + rect.h * dy1);
+            ctx2d.lineTo(rect.x + rect.w * (dx1 + dx2), rect.y + rect.h * (dy1 + dx2));
+            ctx2d.lineTo(rect.x + rect.w * (dx1 + dx2 + dx3), rect.y + rect.h * (dy1 + dx2 - dx3));
+            ctx2d.stroke();
             break;
         }
         case microui.ICON_COLLAPSED: {
-            // TODO: >
+            ctx2d.strokeStyle = color_to_hex(color);
+            ctx2d.lineWidth = 1.25;
+            ctx2d.lineCap = "square";
+            ctx2d.strokeStyle = "white";
+            const r = 0.35;
+            const dx = 0.1;
+            ctx2d.beginPath();
+            ctx2d.moveTo(rect.x + rect.w * (r + dx), rect.y + rect.h * r);
+            ctx2d.lineTo(rect.x + rect.w * (0.5 + dx), rect.y + rect.h * 0.5);
+            ctx2d.lineTo(rect.x + rect.w * (r + dx), rect.y + rect.h * (1 - r));
+            ctx2d.stroke();
             break;
         }
         case microui.ICON_EXPANDED: {
-            // TODO: v
+            ctx2d.strokeStyle = color_to_hex(color);
+            ctx2d.lineWidth = 1.25;
+            ctx2d.lineCap = "square";
+            ctx2d.strokeStyle = "white";
+            const r = 0.35;
+            const dy = 0.1;
+            ctx2d.beginPath();
+            ctx2d.moveTo(rect.x + rect.w * r, rect.y + rect.h * (r + dy));
+            ctx2d.lineTo(rect.x + rect.w * 0.5, rect.y + rect.h * (0.5 + dy));
+            ctx2d.lineTo(rect.x + rect.w * (1 - r), rect.y + rect.h * (r + dy));
+            ctx2d.stroke();
             break;
         }
     }
