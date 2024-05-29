@@ -222,7 +222,7 @@ function hex2(c) {
 
 function color_to_hex(color) {
     let str = "#" + hex2(color.r) + hex2(color.g) + hex2(color.b);
-    if (color.a && color.a < 255)
+    if (color.a !== undefined && color.a < 255)
         str += hex2(color.a);
     return str;
 }
