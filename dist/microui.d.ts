@@ -4,6 +4,7 @@ interface WasmModule {
 }
 
 export interface Context {
+  last_id: number;
   commands(): Command[];
   get_current_container(): Container;
   begin(): void;
@@ -41,11 +42,14 @@ export interface Context {
   draw_control_frame(_0: number, _1: Rect, _2: number, _3: number): void;
   update_control(_0: number, _1: Rect, _2: number): void;
   push_id_ptr(_0: number): void;
+  textbox_ex(_0: number, _1: number, _2: number): number;
+  textbox(_0: number, _1: number): number;
   set_text_width_callback(_0: number): void;
   set_text_height_callback(_0: number): void;
   style_colors_addr(): number;
   slider(_0: number, _1: number, _2: number): number;
   get_container(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): Container;
+  input_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   draw_control_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number, _3: number): void;
   text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   label(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
@@ -159,6 +163,9 @@ interface EmbindModule {
   ICON_CHECK: number;
   ICON_COLLAPSED: number;
   ICON_EXPANDED: number;
+  RES_ACTIVE: number;
+  RES_SUBMIT: number;
+  RES_CHANGE: number;
   OPT_ALIGNCENTER: number;
   OPT_ALIGNRIGHT: number;
   OPT_NOINTERACT: number;

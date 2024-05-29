@@ -54,6 +54,14 @@ static intptr_t my_mu_style_colors_addr(const mu_Context &ctx) {
     return (intptr_t)&ctx.style->colors;
 }
 
+static auto my_mu_textbox_ex(mu_Context *ctx, intptr_t buf, int bufsz, int opt) {
+    return mu_textbox_ex(ctx, (char*)buf, bufsz, opt);
+}
+
+static auto my_mu_textbox(mu_Context *ctx, intptr_t buf, int bufsz) {
+    return mu_textbox(ctx, (char*)buf, bufsz);
+}
+
 #define CONVERT_MY_FUNC_STR(func, ...)                                              \
     static auto my_##func(mu_Context *ctx, const std::string &str, ##__VA_ARGS__) { \
         return func(ctx, str.c_str(), ##__VA_ARGS__);                               \
@@ -70,6 +78,7 @@ CONVERT_MY_FUNC_STR(mu_header_ex, int(opt));
 CONVERT_MY_FUNC_STR(mu_begin_treenode_ex, int(opt));
 CONVERT_MY_FUNC_STR(mu_begin_window_ex, mu_Rect(rect), int(opt));
 CONVERT_MY_FUNC_STR(mu_begin_panel_ex, int(opt));
+CONVERT_MY_FUNC_STR(mu_input_text);
 
 // macros
 CONVERT_MY_FUNC_STR(mu_button);
@@ -131,8 +140,7 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("input_scroll", mu_input_scroll, allow_raw_pointers())
         .function("input_keydown", mu_input_keydown, allow_raw_pointers())
         .function("input_keyup", mu_input_keyup, allow_raw_pointers())
-        // TODO: const char*
-        // .function("input_text", mu_input_text, allow_raw_pointers())
+        .function("input_text", my_mu_input_text, allow_raw_pointers())
         .function("push_command", mu_push_command, allow_raw_pointers())
         // .function("next_command", mu_next_command, allow_raw_pointers())
         .function("set_clip", mu_set_clip, allow_raw_pointers())
@@ -157,7 +165,7 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("button_ex", my_mu_button_ex, allow_raw_pointers())
         .function("checkbox", my_mu_checkbox, allow_raw_pointers())
         // .function("textbox_raw", mu_textbox_raw, allow_raw_pointers())
-        // .function("textbox_ex", mu_textbox_ex, allow_raw_pointers())
+        .function("textbox_ex", my_mu_textbox_ex, allow_raw_pointers())
         .function("slider_ex", my_mu_slider_ex, allow_raw_pointers())
         // .function("number_ex", mu_number_ex, allow_raw_pointers())
         .function("header_ex", my_mu_header_ex, allow_raw_pointers())
@@ -172,6 +180,7 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("end_panel", mu_end_panel, allow_raw_pointers())
         // macros
         .function("button", my_mu_button, allow_raw_pointers())
+        .function("textbox", my_mu_textbox, allow_raw_pointers())
         .function("slider", my_mu_slider, allow_raw_pointers())
         .function("header", my_mu_header, allow_raw_pointers())
         .function("begin_treenode", my_mu_begin_treenode, allow_raw_pointers())
@@ -181,7 +190,8 @@ EMSCRIPTEN_BINDINGS(microui) {
         .function("set_text_width_callback", my_set_text_width_callback, allow_raw_pointers())
         .function("set_text_height_callback", my_set_text_height_callback, allow_raw_pointers())
         .function("commands", my_mu_commands, allow_raw_pointers())
-        .function("style_colors_addr", my_mu_style_colors_addr);
+        .function("style_colors_addr", my_mu_style_colors_addr)
+        .property("last_id", &mu_Context::last_id);
 
     value_object<mu_Vec2>("Vec2").field("x", &mu_Vec2::x).field("y", &mu_Vec2::y);
 
@@ -257,6 +267,10 @@ EMSCRIPTEN_BINDINGS(microui) {
     constant<int>("ICON_CHECK", MU_ICON_CHECK);
     constant<int>("ICON_COLLAPSED", MU_ICON_COLLAPSED);
     constant<int>("ICON_EXPANDED", MU_ICON_EXPANDED);
+
+    constant<int>("RES_ACTIVE", MU_RES_ACTIVE);
+    constant<int>("RES_SUBMIT", MU_RES_SUBMIT);
+    constant<int>("RES_CHANGE", MU_RES_CHANGE);
 
     constant<int>("OPT_ALIGNCENTER", MU_OPT_ALIGNCENTER);
     constant<int>("OPT_ALIGNRIGHT", MU_OPT_ALIGNRIGHT);

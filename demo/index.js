@@ -59,11 +59,40 @@ MicroUiModule().then((Module) => {
         mctx.input_mouseup(ev.offsetX, ev.offsetY, mu_mouse_btns[ev.button]);
     });
     canvas.addEventListener("wheel", ev => {
-        mctx.input_scroll(ev.offsetX, ev.offsetY);
+        mctx.input_scroll(ev.deltaX, ev.deltaY);
+    });
+    // microui's `input_keydown` and `input_keyup` only process control keys.
+    document.body.addEventListener("keydown", ev => {
+        const ck = map_control_key(ev.key);
+        if (ck) {
+            mctx.input_keydown(ck);
+        } else if (ev.key.length == 1) {
+            mctx.input_text(ev.key);
+        }
+    });
+    document.body.addEventListener("keyup", ev => {
+        const ck = map_control_key(ev.key);
+        if (ck) {
+            mctx.input_keyup(ck);
+        }
     });
 
     setTimeout(() => window.requestAnimationFrame(draw), 0);
 })
+
+let CONTROL_KEY_MAP;
+function map_control_key(k) {
+    if (CONTROL_KEY_MAP === undefined) {
+        CONTROL_KEY_MAP = new Map([
+            ["Shift", microui.KEY_SHIFT],
+            ["Control", microui.KEY_CTRL],
+            ["Alt", microui.KEY_ALT],
+            ["Enter", microui.KEY_RETURN],
+            ["Backspace", microui.KEY_BACKSPACE],
+        ]);
+    }
+    return CONTROL_KEY_MAP.get(k);
+}
 
 /**
  * @param {*} mctx
@@ -358,6 +387,7 @@ function test_window(ctx) {
     }
 }
 
+let buf;
 function log_window(ctx) {
     if (ctx.begin_window("Log Window", mu_rect(350, 40, 300, 200))) {
         /* output text panel */
@@ -374,19 +404,21 @@ function log_window(ctx) {
         }
 
         /* input textbox + submit button */
-        // TODO
-        if (false) {
-            let buf = [128];
-            let submitted = 0;
-            ctx.layout_row([-70, -1], 0);
-            if (ctx.textbox(buf, sizeof(buf)) & microui.RES_SUBMIT) {
-                ctx.set_focus(ctx.last_id);
-                submitted = 1;
-            }
-            if (ctx.button("Submit")) { submitted = 1; }
-            if (submitted) {
-                write_log(buf);
-                buf[0] = '\0';
+        if (buf === undefined) {
+            buf = microui._malloc(128);
+            microui.HEAPU8.fill(0, buf, buf + 128);
+        }
+        let submitted = 0;
+        ctx.layout_row([-70, -1], 0);
+        if (ctx.textbox(buf, 128) & microui.RES_SUBMIT) {
+            ctx.set_focus(ctx.last_id);
+            submitted = 1;
+        }
+        if (ctx.button("Submit")) { submitted = 1; }
+        if (submitted) {
+            if (microui.HEAPU8[buf] != 0) {
+                write_log(microui.UTF8ToString(buf));
+                microui.HEAPU8[buf] = 0;
             }
         }
 
