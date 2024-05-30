@@ -1,4 +1,7 @@
-dist/microui.mjs: src/microui.c src/binder.cpp
+OUTPUT_DIR = ../dist
+
+$(OUTPUT_DIR)/microui.mjs $(OUTPUT_DIR)/microui.wasm: microui.c binder.cpp
+	@mkdir -p $(OUTPUT_DIR)
 	emcc -lembind \
 		-sALLOW_TABLE_GROWTH \
 		-sALLOW_MEMORY_GROWTH \
@@ -9,8 +12,8 @@ dist/microui.mjs: src/microui.c src/binder.cpp
 		$(filter %.cpp,$^) $(filter %.c,$^) \
 		--emit-tsd microui.d.ts
 
-dist/microui.mjs: Makefile
+$(OUTPUT_DIR)/microui.mjs $(OUTPUT_DIR)/microui.wasm: Makefile
 
 .PHONY: clean
 clean:
-	-rm dist/*
+	-rm $(OUTPUT_DIR)/*

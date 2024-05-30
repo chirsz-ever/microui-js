@@ -1,3 +1,7 @@
 .o
 .clangd
 .vscode
+/dist
+/wasm-src/build
+node_modules
+package-lock.json

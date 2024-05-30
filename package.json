@@ -1,0 +1,26 @@
+{
+  "name": "microui-js",
+  "author": "chirsz-ever",
+  "version": "0.1.0",
+  "description": "A WASM based JavaScript binding of rxi/microui",
+  "module": "dist/index.mjs",
+  "scripts": {
+    "demo": "echo \"visit http://127.0.0.1:8000/demo/demo.html\" && python3 -m http.server",
+    "build:wasm": "cd wasm-src && make",
+    "build": "npm run build:wasm && cp src/index.mjs dist/index.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chirsz-ever/microui-js"
+  },
+  "keywords": [
+    "WASM",
+    "GUI"
+  ],
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "license": "BSL-1.0"
+}
