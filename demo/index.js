@@ -149,7 +149,6 @@ function draw_icon(ctx2d, icon_id, rect, color) {
             ctx2d.strokeStyle = color_to_hex(color);
             ctx2d.lineWidth = 1.25;
             ctx2d.lineCap = "square";
-            ctx2d.strokeStyle = "white";
             const r = 0.35;
             ctx2d.beginPath();
             ctx2d.moveTo(rect.x + rect.w * r, rect.y + rect.h * r);
@@ -163,7 +162,6 @@ function draw_icon(ctx2d, icon_id, rect, color) {
             ctx2d.strokeStyle = color_to_hex(color);
             ctx2d.lineWidth = 1.25;
             ctx2d.lineCap = "square";
-            ctx2d.strokeStyle = "white";
             const dy1 = 0.55;
             const dx1 = 0.2;
             const dx2 = 0.15;
@@ -179,7 +177,6 @@ function draw_icon(ctx2d, icon_id, rect, color) {
             ctx2d.strokeStyle = color_to_hex(color);
             ctx2d.lineWidth = 1.25;
             ctx2d.lineCap = "square";
-            ctx2d.strokeStyle = "white";
             const r = 0.35;
             const dx = 0.1;
             ctx2d.beginPath();
@@ -193,7 +190,6 @@ function draw_icon(ctx2d, icon_id, rect, color) {
             ctx2d.strokeStyle = color_to_hex(color);
             ctx2d.lineWidth = 1.25;
             ctx2d.lineCap = "square";
-            ctx2d.strokeStyle = "white";
             const r = 0.35;
             const dy = 0.1;
             ctx2d.beginPath();
