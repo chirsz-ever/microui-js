@@ -28,6 +28,7 @@ export interface Context {
   layout_row(_0: number[], _1: number): void;
   layout_width(_0: number): void;
   layout_height(_0: number): void;
+  set_style_color(_0: number, _1: Color): void;
   push_clip_rect(_0: Rect): void;
   get_clip_rect(): Rect;
   check_clip(_0: Rect): number;
@@ -41,9 +42,13 @@ export interface Context {
   set_focus(_0: number): void;
   draw_control_frame(_0: number, _1: Rect, _2: number, _3: number): void;
   update_control(_0: number, _1: Rect, _2: number): void;
+  get_id(_0: number, _1: number): number;
+  push_id(_0: number, _1: number): void;
   push_id_ptr(_0: number): void;
-  textbox_ex(_0: number, _1: number, _2: number): number;
   textbox(_0: number, _1: number): number;
+  number(_0: number, _1: number): number;
+  textbox_raw(_0: number, _1: number, _2: number, _3: Rect, _4: number): number;
+  textbox_ex(_0: number, _1: number, _2: number): number;
   set_text_width_callback(_0: number): void;
   set_text_height_callback(_0: number): void;
   style_colors_addr(): number;
@@ -51,22 +56,23 @@ export interface Context {
   get_container(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): Container;
   input_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   draw_control_text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number, _3: number): void;
+  button(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
+  header(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
+  begin_treenode(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
+  begin_window(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect): number;
+  begin_panel(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   text(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   label(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   button_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number, _2: number): number;
   checkbox(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
   slider_ex(_0: number, _1: number, _2: number, _3: number, _4: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _5: number): number;
+  number_ex(_0: number, _1: number, _2: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _3: number): number;
   header_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
   begin_treenode_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): number;
   begin_window_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect, _2: number): number;
   open_popup(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   begin_popup(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
   begin_panel_ex(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: number): void;
-  button(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
-  header(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
-  begin_treenode(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): number;
-  begin_window(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string, _1: Rect): number;
-  begin_panel(_0: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string): void;
   delete(): void;
 }
 
@@ -112,6 +118,19 @@ export interface Container {
   delete(): void;
 }
 
+export interface Style {
+  size: Vec2;
+  padding: number;
+  spacing: number;
+  indent: number;
+  title_height: number;
+  scrollbar_size: number;
+  thumb_size: number;
+  set_color(_0: number, _1: Color): void;
+  get_color(_0: number): Color;
+  delete(): void;
+}
+
 export type Color = {
   r: number,
   g: number,
@@ -139,6 +158,8 @@ interface EmbindModule {
   RectCommand: {};
   IconCommand: {};
   Container: {};
+  Style: {};
+  MAX_WIDTHS: number;
   CLIP_PART: number;
   CLIP_ALL: number;
   COMMAND_CLIP: number;
@@ -187,5 +208,6 @@ interface EmbindModule {
   KEY_ALT: number;
   KEY_BACKSPACE: number;
   KEY_RETURN: number;
+  VERSION: ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string;
 }
 export type MainModule = WasmModule & EmbindModule;
